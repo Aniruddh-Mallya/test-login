@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "build": "npm run build:fix",
+    "preview": "vite preview",
+    "build:fix": "npm install && vite build"
   },
   "keywords": [],
   "author": "",
