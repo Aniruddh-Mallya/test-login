@@ -2,6 +2,13 @@
   "name": "api",
   "version": "1.0.0",
   "description": "Azure Function API for login",
+  "engines": {
+    "node": "18.x"
+  },
+  "scripts": {
+    "start": "func start",
+    "build": "echo 'No build step required'"
+  },
   "dependencies": {
     "tedious": "^18.2.0"
   }

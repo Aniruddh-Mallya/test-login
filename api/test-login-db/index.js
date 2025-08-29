@@ -80,7 +80,7 @@ module.exports = async function (context, req) {
         };
     } finally {
         // Always close the connection
-        if (connection.closed) {
+        if (!connection.closed) {
           connection.close();
         }
     }
