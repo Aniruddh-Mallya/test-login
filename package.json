@@ -1,5 +1,13 @@
 {
-  "name": "test-login",
+  "name": "test-login-app-service",
   "version": "1.0.0",
-  "description": "A simple test login page using React from a CDN."
+  "description": "Login app for Azure App Service",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "tedious": "^18.2.0"
+  }
 }
