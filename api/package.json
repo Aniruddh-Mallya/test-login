@@ -1,0 +1,8 @@
+{
+  "name": "api",
+  "version": "1.0.0",
+  "description": "Azure Function API for login",
+  "dependencies": {
+    "tedious": "^18.2.0"
+  }
+}
