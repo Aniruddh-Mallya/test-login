@@ -4,9 +4,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "vite",
-    "build": "npm run build:fix",
-    "preview": "vite preview",
-    "build:fix": "npm install && vite build"
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "keywords": [],
   "author": "",
