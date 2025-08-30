@@ -8,7 +8,7 @@ const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
-// API Route
+// API Route for Login
 app.post('/api/test-login-db', async (req, res) => {
     const { username, password } = req.body;
     
@@ -163,6 +163,71 @@ app.post('/api/add-project', async (req, res) => {
 
     } catch (err) {
         console.error('Add project error:', err);
+        res.status(500).json({ status: `Database error: ${err.message}` });
+    } finally {
+        if (connection && !connection.closed) {
+            connection.close();
+        }
+    }
+});
+
+// ---  API Route for Getting Projects ---
+app.get('/api/projects', async (req, res) => {
+    const dbConfig = {
+        server: process.env.DB_SERVER,
+        authentication: {
+            type: 'default',
+            options: {
+                userName: process.env.DB_USERNAME,
+                password: process.env.DB_PASSWORD,
+            }
+        },
+        options: {
+            database: process.env.DB_DATABASE,
+            encrypt: true,
+            trustServerCertificate: false
+        }
+    };
+    
+    const connection = new Connection(dbConfig);
+    const projects = [];
+
+    try {
+        await new Promise((resolve, reject) => {
+            connection.on('connect', (err) => {
+                if (err) reject(err);
+                else resolve();
+            });
+            connection.connect();
+        });
+
+        await new Promise((resolve, reject) => {
+            const sql = `SELECT ResearcherName, ProjectTitle FROM Projects ORDER BY CreatedAt DESC`;
+            const request = new Request(sql, (err) => {
+                if (err) reject(err);
+            });
+
+            // This event fires for each row returned from the database
+            request.on('row', (columns) => {
+                projects.push({
+                    researcherName: columns[0].value,
+                    projectTitle: columns[1].value
+                });
+            });
+
+            // This event fires when the query is complete
+            request.on('requestCompleted', () => {
+                resolve();
+            });
+            
+            connection.execSql(request);
+        });
+
+        res.status(200).json(projects);
+
+    } catch (err)
+ {
+        console.error('Get projects error:', err);
         res.status(500).json({ status: `Database error: ${err.message}` });
     } finally {
         if (connection && !connection.closed) {
