@@ -11,11 +11,15 @@ app.use(express.json());
 // API Route
 app.post('/api/test-login-db', async (req, res) => {
     const { username, password } = req.body;
-
+    
+    console.log('Login attempt for username:', username);
+    
     if (!username || !password) {
         return res.status(400).json({ status: "Please provide both a username and a password." });
     }
 
+    // --- THIS IS THE CORRECTED CONFIGURATION LOGIC ---
+    // 1. Read individual settings from environment variables
     const dbConfig = {
         server: process.env.DB_SERVER,
         authentication: {
@@ -32,44 +36,62 @@ app.post('/api/test-login-db', async (req, res) => {
         }
     };
 
+    console.log('Database config server:', dbConfig.server);
+    console.log('Database config database:', dbConfig.options.database);
+
+    // 2. Check if all required settings are present
     if (!dbConfig.server || !dbConfig.authentication.options.userName || !dbConfig.authentication.options.password || !dbConfig.options.database) {
         return res.status(500).json({ status: "Database configuration is incomplete. Please check all DB settings." });
     }
     
+    // 3. Create the connection using the config object
     const connection = new Connection(dbConfig);
 
     try {
+        console.log('Attempting database connection...');
+        
+        // Promisify the connection process
         await new Promise((resolve, reject) => {
             connection.on('connect', (err) => {
-                if (err) reject(err);
-                else resolve();
+                if (err) {
+                    console.error('Connection error:', err);
+                    reject(err);
+                } else {
+                    console.log('Database connected successfully');
+                    resolve();
+                }
             });
             connection.connect();
         });
 
+        console.log('Executing query for user:', username);
+        
+        // Execute the query
         const result = await new Promise((resolve, reject) => {
-            const sql = `SELECT COUNT(1) AS UserCount FROM Users WHERE Username = @username`;
+            const sql = `SELECT COUNT(1) AS UserCount FROM Users WHERE Username = @username AND Password = @password`;
             const request = new Request(sql, (err, rowCount, rows) => {
-                // --- THIS IS THE CORRECTED LOGIC ---
                 if (err) {
+                    console.error('Query error:', err);
                     reject(err);
-                } else if (rowCount !== 1 || !rows || rows.length === 0) {
-                    // This case handles when no rows are returned, which we treat as invalid.
-                    resolve({ isValid: false });
                 } else {
-                    // Now that we know a row exists, we can safely access it.
-                    const userCount = rows[0][0].value;
-                    resolve({ isValid: userCount === 1 });
+                    console.log('Query result - rowCount:', rowCount, 'rows:', rows);
+                    if (rowCount === 1 && rows[0][0].value === 1) {
+                        resolve({ isValid: true });
+                    } else {
+                        resolve({ isValid: false });
+                    }
                 }
-                // ------------------------------------
             });
 
             request.addParameter('username', TYPES.NVarChar, username);
-            // request.addParameter('password', TYPES.NVarChar, password);
+            request.addParameter('password', TYPES.NVarChar, password);
             
             connection.execSql(request);
         });
 
+        console.log('Query completed, result:', result);
+
+        // Send response
         if (result.isValid) {
             res.status(200).json({ status: "Login Successful" });
         } else {
@@ -80,6 +102,7 @@ app.post('/api/test-login-db', async (req, res) => {
         console.error('Login error:', err);
         res.status(500).json({ status: `Database error: ${err.message}` });
     } finally {
+        // Always close the connection
         if (connection && !connection.closed) {
             connection.close();
         }
