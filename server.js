@@ -48,7 +48,7 @@ app.post('/api/test-login-db', async (req, res) => {
         });
 
         const result = await new Promise((resolve, reject) => {
-            const sql = `SELECT COUNT(1) AS UserCount FROM Users WHERE Username = @username AND Password = @password`;
+            const sql = `SELECT COUNT(1) AS UserCount FROM Users WHERE Username = @username`;
             const request = new Request(sql, (err, rowCount, rows) => {
                 // --- THIS IS THE CORRECTED LOGIC ---
                 if (err) {
@@ -65,7 +65,7 @@ app.post('/api/test-login-db', async (req, res) => {
             });
 
             request.addParameter('username', TYPES.NVarChar, username);
-            request.addParameter('password', TYPES.NVarChar, password);
+            // request.addParameter('password', TYPES.NVarChar, password);
             
             connection.execSql(request);
         });
