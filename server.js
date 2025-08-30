@@ -107,6 +107,75 @@ app.post('/api/test-login-db', async (req, res) => {
     }
 });
 
+
+// --- API Route for Adding Projects ---
+app.post('/api/add-project', async (req, res) => {
+    const { researcherName, projectTitle } = req.body;
+
+    if (!researcherName || !projectTitle) {
+        return res.status(400).json({ status: "Please provide both a researcher name and a project title." });
+    }
+
+    const dbConfig = {
+        server: process.env.DB_SERVER,
+        authentication: {
+            type: 'default',
+            options: {
+                userName: process.env.DB_USERNAME,
+                password: process.env.DB_PASSWORD,
+            }
+        },
+        options: {
+            database: process.env.DB_DATABASE,
+            encrypt: true,
+            trustServerCertificate: false
+        }
+    };
+    
+    const connection = new Connection(dbConfig);
+
+    try {
+        await new Promise((resolve, reject) => {
+            connection.on('connect', (err) => {
+                if (err) reject(err);
+                else resolve();
+            });
+            connection.connect();
+        });
+
+        await new Promise((resolve, reject) => {
+            const sql = `INSERT INTO Projects (ResearcherName, ProjectTitle) VALUES (@researcherName, @projectTitle)`;
+            const request = new Request(sql, (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            });
+
+            request.addParameter('researcherName', TYPES.NVarChar, researcherName);
+            request.addParameter('projectTitle', TYPES.NVarChar, projectTitle);
+            
+            connection.execSql(request);
+        });
+
+        res.status(201).json({ status: "Project added successfully!" });
+
+    } catch (err) {
+        console.error('Add project error:', err);
+        res.status(500).json({ status: `Database error: ${err.message}` });
+    } finally {
+        if (connection && !connection.closed) {
+            connection.close();
+        }
+    }
+});
+
+// --- Dashboard Route ---
+app.get('/dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+});
+
 // Start the Server
 const port = process.env.PORT || 8080;
 app.listen(port, () => {

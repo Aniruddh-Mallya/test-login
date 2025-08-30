@@ -97,7 +97,16 @@
             });
 
             const data = await response.json();
-            setMessage(data.status);
+            
+            if (data.status === "Login Successful") {
+              setMessage('Login successful! Redirecting to dashboard...');
+              // Redirect to dashboard after a brief delay to show success message
+              setTimeout(() => {
+                window.location.href = '/dashboard';
+              }, 1500);
+            } else {
+              setMessage(data.status);
+            }
 
           } catch (error) {
             setMessage('An error occurred. Check the console for details.');
