@@ -68,18 +68,16 @@ app.post('/api/test-login-db', async (req, res) => {
         
         // Execute the query
         const result = await new Promise((resolve, reject) => {
-            const sql = `SELECT COUNT(1) AS UserCount FROM Users WHERE Username = @username AND Password = @password`;
-            const request = new Request(sql, (err, rowCount, rows) => {
+            const sql = `SELECT 1 FROM Users WHERE Username = @username AND Password = @password`;
+            const request = new Request(sql, (err, rowCount) => {
                 if (err) {
                     console.error('Query error:', err);
                     reject(err);
                 } else {
-                    console.log('Query result - rowCount:', rowCount, 'rows:', rows);
-                    if (rowCount === 1 && rows[0][0].value === 1) {
-                        resolve({ isValid: true });
-                    } else {
-                        resolve({ isValid: false });
-                    }
+                    console.log('Query result - rowCount:', rowCount);
+                    
+                    // If rowCount > 0, user exists; if 0, user doesn't exist
+                    resolve({ isValid: rowCount > 0 });
                 }
             });
 
